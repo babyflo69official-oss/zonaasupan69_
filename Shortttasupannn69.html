@@ -1,0 +1,1784 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ZONA ASUPAN 69 — Short Video Asupan</title>
+  <meta name="description" content="Zona Asupan69 | Short video reels — optimized player, lazy-load, modal download with ad, and ad script guard." />
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="https://i.postimg.cc/Sx9CbsQd/1746200925-file-111-69.png">
+<style>
+:root{
+  --bg:#070707; --card:#0b0b0b; --text:#eef1f7; --muted:rgba(238,241,247,0.6);
+  --accent:#8f69e9; --accent-2:#00ffff; --focus:3px solid rgba(144,105,233,0.16);
+}
+
+/* base layout */
+  html, body {
+    height:100%;
+    margin:0;
+    background:linear-gradient(180deg,#050506 0%, #0b0b0c 100%);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  /* layout */
+  .wrap{height:100vh;display:flex;align-items:stretch;justify-content:center;}
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:460px;
+    height:100vh;
+    overflow:hidden;
+    background:#000;
+    border-left:1px solid rgba(255,255,255,0.03);
+    border-right:1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Reels scroll container */
+  .reels-wrap{
+    height:100%;
+    overflow-y:auto;
+    scroll-snap-type:y mandatory;
+    -webkit-overflow-scrolling:touch;
+    position:relative;
+    outline:none;
+  }
+
+  /* Reel (each full-screen card) */
+  .reel{
+    height:100vh;
+    scroll-snap-align:center;
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    position:relative;
+    user-select:none;
+    contain:layout style;
+    scroll-snap-stop:always;
+  }
+
+  .card{ position:relative; width:100%; height:100%; display:block; overflow:hidden; background:#000; border-radius:0; will-change:transform,opacity; }
+  .card::before{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0.09),transparent 39%); pointer-events:none; z-index:2; }
+
+  /* Video element */
+  .card video{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+    background:#000; transform-origin:center center; will-change:opacity,transform; opacity:0; transition:opacity .18s linear;
+    backface-visibility:hidden; transform:translateZ(0); z-index:0;
+  }
+
+/* poster layer */
+  /* Poster layer */
+  .poster-layer{ position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(6px) saturate(.95); transform:scale(1.03); transition:opacity var(--anim-med) ease, filter var(--anim-med) ease; will-change:opacity; z-index:1; opacity:1; }
+  .poster-layer.hidden{ opacity:0; pointer-events:none; visibility:hidden; }
+
+/* video */
+video{ width:100%; height:100%; object-fit:cover; display:block; background:transparent; opacity:0; transition:opacity .18s ease; }
+
+/* play overlay */
+.play-overlay{ 
+  position:absolute; 
+  inset:0; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  z-index:6; 
+  pointer-events:auto; 
+  transition:opacity var(--anim-fast), visibility var(--anim-fast); 
+  background:linear-gradient(369deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9)); 
+  visibility:visible; 
+  opacity:1; 
+}
+
+
+.play-btn{ 
+  pointer-events:auto; 
+  background:transparent; 
+  border:0; 
+  color:#fff; 
+  padding:0; 
+  margin:0; 
+  border-radius:999px; 
+  font-size:21px; 
+  cursor:pointer; 
+  display:inline-flex; 
+  align-items:center; 
+  justify-content:center; 
+  width:100%; 
+  height:100%; 
+  opacity:0; 
+  position:absolute; /* absolute center di circle */
+  top:0; 
+  left:0; 
+}
+.play-btn:focus-visible{ outline: #999; border-radius:12px; }
+
+.play-overlay.hidden{ visibility:hidden; opacity:0; pointer-events:none; }
+.play-button-visual{ 
+  display:flex; 
+  flex-direction:column; 
+  align-items:center; 
+  justify-content:center; 
+  gap:9px; 
+
+  opacity:0.98; 
+  text-align:center; 
+  position:relative; /* tambah ini buat jaga-jaga */
+}
+.play-circle{ 
+  width:72px; 
+  height:72px; 
+  border-radius:999px; 
+  background:linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03)); 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  box-shadow:0 9px 39px rgba(0,0,0,0.9); 
+  position:relative; /* tambah ini buat center SVG */
+
+}
+.play-label{ font-weight:699; font-size:12px; color: #f9f9f9; margin-top:6px; }
+
+/* UI column */
+  .ui-column{ position:absolute; right:12px; bottom:99px; display:flex; flex-direction:column; gap:12px; z-index:9; align-items:center; }
+  
+  .ui-column .ui-btn{ width:auto;height:auto;min-width:45px;min-height:45px; display:inline-flex;flex-direction:column;align-items:center;justify-content:center; border-radius:9px;background: transparent;color: #f9f9f9;border:none;cursor:pointer;padding:6px; transition: transform var(--anim-fast);position:relative;text-decoration:none;box-shadow:none; }
+  
+  .ui-column .ui-btn svg{ width:28px;height:28px;display:block;pointer-events:none; }
+  .ui-column .ui-btn .count{ display:block;font-size:12px;margin-top:6px;text-align:center;color:#f9f9f9;font-weight:700 }
+.avatar{ width:44px; height:44px; border-radius:50%; overflow:hidden; display:inline-block; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); }
+.music{ display:flex; align-items:center; gap:9px; color:var(--muted); font-size:12px; pointer-events:auto; }
+.avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .marquee{ display:flex;align-items:center;gap:9px; overflow:hidden; white-space:nowrap; animation: marquee 15s linear infinite; }
+  .ui-column .ui-btn.like-btn svg { fill: none; stroke: white; stroke-width: 1.8; transition: transform 0.2s; }
+  .ui-column .ui-btn.liked svg { fill: url(#heartGrad); stroke: none; }
+  .ui-column .ui-btn.liked { animation: likeBounce 0.5s ease; }
+  @keyframes likeBounce { 0%,20%,50%,80%,100% { transform: scale(1); } 39% { transform: scale(1.2); } 69% { transform: scale(1.1); } }
+
+/* meta */
+.meta{ position:absolute; left:14px; right:110px; bottom:28px; z-index:7; color:var(--text); text-shadow:0 6px 20px rgba(0,0,0,0.6); display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+.meta *{ pointer-events:auto; }
+.author{ display:flex; align-items:center; gap:10px; pointer-events:auto; }
+.author .name{ font-weight:800 }
+.author .handle{ font-size:12px; color:var(--muted) }
+.caption{  font-size:14px;
+ color:var(--muted);
+ max-width:100%;
+ line-height:1.21;
+ white-space: normal; / allow wrapping /
+ overflow: visible; / show full content /
+ text-overflow: unset;}
+.caption a{ color:var(--accent); text-decoration:underline }
+
+/* progress */
+.progress-wrap{ position:absolute; left:0; right:0; bottom:0; height:4px; z-index:9; pointer-events:none; }
+.progress{ height:100%; background:rgba(255,255,255,0.02) }
+.progress > i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .08s linear; will-change:width; }
+
+/* heart */
+.heart-anim{ position:absolute; pointer-events:none; opacity:0; transform:translate(-50%,-50%) scale(0.9); transition:opacity .28s ease, transform .48s cubic-bezier(.2,.9,.3,1); z-index:20 }
+.heart-anim.show{ opacity:1; transform:translate(-50%,-120%) scale(1.05) }
+
+/* toast */
+.toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:24px; background:rgba(0,0,0,0.6); padding:10px 14px; border-radius:12px; color:#fff; font-size:12px; z-index:10000; opacity:0; transition:opacity .18s }
+.toast.show{ opacity:1 }
+
+/* share menu */
+.vp-share-menu{ position:absolute; z-index:99999; background:rgba(0,0,0,0.96); color:#fff; border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; min-width:180px; box-shadow:0 8px 30px rgba(0,0,0,0.6); font-size:14px; backdrop-filter:blur(6px); }
+.vp-share-menu a, .vp-share-menu button{ display:inline-block; padding:8px; border-radius:8px; color:#fff; background:rgba(255,255,255,0.04); text-decoration:none; text-align:left; }
+
+
+
+
+
+/* Modal styles — iklan full area, controls di bawah */
+#adModal.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 120000;
+  background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.82));
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  backdrop-filter: blur(8px) saturate(1.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 260ms ease, visibility 260ms, transform 260ms ease;
+  padding: 19px;
+}
+#adModal[aria-hidden="false"],
+#adModal.is-open { opacity: 1; visibility: visible; }
+
+
+/* modal container laid out as column so ad can expand */
+#adModal .modal-wrap {
+  width: min(96%, 999px);
+  max-width: 720px;
+  border-radius: 18px;
+  padding: 9px;
+  background: linear-gradient(135deg, rgba(18,12,32,0.98), rgba(12,12,16,0.96));
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  color: #f2f4f8;
+  transform: translateY(6px);
+  transition: transform 260ms cubic-bezier(.2,.9,.3,1), opacity 200ms;
+  position: relative;
+  overflow: hidden;
+  max-height: 90vh;          /* limit modal height */
+  display: flex;
+  flex-direction: column;    /* stack ad area on top and controls below */
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+
+
+/* body: stack vertically so ad fills first area */
+#adModal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* left column contains icon/title/message + adslot; we reorder children so adslot is shown first */
+#adModal .modal-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* put ad-slot visually first inside modal-left */
+#adModal .modal-left > .modal-ad-slot {
+  order: -1;
+  flex: 1 1 auto;           /* allow ad-slot to grow and fill available space */
+  min-height: 69vh;        /* default vertical size; adjust as needed */
+  width: 100%;
+  margin: 0;
+  padding: 0;               /* inner wrapper will handle padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #000;         /* dark background while loading */
+  overflow: hidden;
+}
+
+/* keep icon/title/message under the ad area */
+
+#adModal .modal-title { margin: 0; font-size: 15px; line-height:1.1; font-weight:699; color:#fff; text-align: center; }
+#adModal .modal-text {font-size: 0.93rem; margin: 0; color: rgba(238,241,247,0.78);  line-height:1.35; text-align: center }
+
+/* ad iframe wrapper and iframe - full fill of ad slot */
+#adModal .modal-ad-slot .adframe-wrap {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+}
+#adModal .modal-ad-slot .adframe-wrap iframe.ad-frame,
+#adModal .modal-ad-slot iframe.ad-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+
+
+
+
+
+
+
+/* actions column (stack vertical on right area) */
+#adModal .modal-actions { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+
+/* buttons */
+.btn { font-family: inherit; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; transition: all .16s ease; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.btn-ghost { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.08); }
+
+.btn-success { background: linear-gradient(180deg, #9069e9, #090909); color: #fff; }
+.btn-primary  { background: linear-gradient(180deg, #9069e9, #090909); color: #fff; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* footer stays at very bottom of modal-wrap */
+#adModal .modal-foot { margin-top: 8px; text-align:center; color:rgba(255,255,255,0.6); font-size:12px; }
+
+/* responsive */
+@media (max-width: 520px) {
+  #adModal .modal-wrap { padding: 10px; width: min(96%, 420px); }
+  #adModal .modal-left > .modal-ad-slot { min-height: 46vh; } /* larger on mobile */
+  #adModal .count-wrap { width: 72px; height: 72px; }
+
+  #adModal .modal-actions { align-items:stretch; width: 50%; }
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #adModal, #adModal .modal-wrap, #adModal .count-ring .ring { transition: none !important; animation: none !important; }
+  #adModal .adframe-wrap, #adModal .modal-ad-slot { filter: none !important; backdrop-filter: none !important; }
+}
+
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .reels-wrap{ scroll-snap-type: none; }
+  .play-btn,.heart-anim,.progress > i{ transition:none!important; }
+  .marquee{ animation:none; }
+}
+</style>
+</head>
+<body>
+  <!-- Download / Ad Modal -->
+  <div id="adModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-wrap" role="document" aria-labelledby="modalTitle" aria-describedby="modalMessage">
+   <button id="modalClose" class="modal-close" aria-label="Tutup"
+ style="background:#000;color:#fff;display:inline-flex;align-items:center;justify-content:center;text-align:center;padding:3px 9px;border-radius:8px;border:1px solid rgba(255,255,255,0.0); font-weight: 699; font-size: 0.69rem">
+ Silahkan klik kembali jika dialihkan ke halaman lain.
+</button>
+
+      <div class="modal-body">
+        <div class="modal-left">
+          <div class="modal-icon" aria-hidden="true">
+      
+          </div>
+
+      
+          <p id="modalMessage" class="modal-text">Sedang menyiapkan file. Tunggu beberapa detik atau batalkan.</p>
+        <iframe 
+            id="modalAdSlot" 
+            class="modal-ad-slot" 
+            src="https://www.effectivegatecpm.com/jbc2gkf4?key=05b740b50db4084a0cc0799f93121a1a"
+            frameborder="0"
+            allowfullscreen
+        ></iframe>
+ 
+        </div>
+
+ 
+     
+
+   
+            <button id="modalProceed" class="btn btn-ghost" type="button" aria-disabled="true" disabled>Tunggu…</button>
+            <button id="modalCancel" class="btn btn-ghost" type="button">Batal</button>
+          </div>
+        </div>
+      </div>
+
+
+
+  <!-- SVG defs (gradients) -->
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="heartGrad" x1="0" x2="1">
+        <stop offset="0%" stop-color="#9069e9"></stop>
+        <stop offset="100%" stop-color="#ff3d9d"></stop>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Reels container -->
+  <div class="wrap">
+    <div class="stage" role="region" aria-label="Short video reels demo">
+      <div class="reels-wrap" id="reelsWrap" tabindex="0" aria-label="Short video reels" aria-live="polite">
+        <div id="loading" style="color:white; text-align:center; padding:20px; font-size:18px;">Loading videos ...</div>
+      </div>
+      <div id="toast" class="toast" role="status" aria-live="polite">Ready</div>
+    </div>
+  </div>
+
+<script>
+/* === Helpers & Polyfills === */
+if(!window.requestIdleCallback){
+  window.requestIdleCallback = function(cb){ return setTimeout(cb, 120); };
+}
+if(!window.cancelIdleCallback){
+  window.cancelIdleCallback = function(id){ clearTimeout(id); };
+}
+function addListener(el, ev, handler, opts){
+  try{ el.addEventListener(ev, handler, opts); } catch(e){
+    var passive = false;
+    if(opts && typeof opts === 'object' && !!opts.passive) passive = true;
+    try { el.addEventListener(ev, handler, passive); } catch(ignore) {}
+  }
+}
+function debounce(fn, wait){
+  let t = null;
+  return function(...args){ const self = this; clearTimeout(t); t = setTimeout(()=> fn.apply(self, args), wait); };
+}
+function escapeHtml(s){ if(s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function linkifyText(text){
+  if(!text) return '';
+  const escaped = escapeHtml(text);
+  const urlRegex = /(\b(?:https?:\/\/|www\.)[^\s<>\n\r]+)/gi;
+  return escaped.replace(urlRegex, function(url){
+    let href = url;
+    if(!/^https?:\/\//i.test(href)) href = 'https://' + href;
+    return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(url) + '</a>';
+  });
+}
+function hashString(s){
+  let h = 2166136261 >>> 0;
+  const str = String(s || '');
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul ? Math.imul(h, 16777619) >>> 0 : (h * 16777619) >>> 0; }
+  return h >>> 0;
+}
+function seededInRange(seedStr, min, max){
+  const h = hashString(String(seedStr||''));
+  const range = Math.max(1, (max - min + 1));
+  return min + (h % range);
+}
+function computeRandomLikes(orig){
+  const base = Math.max(0, Math.floor(orig || 0));
+  const min = Math.max(1, Math.floor(base * 0.6));
+  const max = Math.max(min + 1, Math.floor(base * 1.4));
+  return { min, max };
+}
+function fmt(n){
+  if(!n) return '0';
+  if(n >= 1000000) { const m = (n/1000000).toFixed(1).replace(/\.0$/, ''); return m + 'M'; }
+  if(n >= 1000) { const k = (n/1000).toFixed(1).replace(/\.0$/, ''); return k + 'k'; }
+  return '' + (n||0);
+}
+function guessMime(url){
+  if(!url) return 'video/mp4';
+  const u = url.split('?')[0].toLowerCase();
+  if(u.indexOf('.webm', u.length - 5) !== -1) return 'video/webm';
+  if(u.indexOf('.ogg', u.length - 4) !== -1 || u.indexOf('.ogv', u.length - 4) !== -1) return 'video/ogg';
+  return 'video/mp4';
+}
+function showToast(msg, ms){
+  if(ms === undefined) ms = 1200;
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = String(msg || '');
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.classList.remove('show'); }, ms);
+}
+
+/* === Config & Defaults === */
+const defaultAvatar = 'https://ik.imagekit.io/Mediadigtalstore/Picsart_25-10-19_11-58-29-741.png?updatedAt=1760851146196';
+const poster = 'https://ik.imagekit.io/Mediadigtalstore/IMG_20250804_031232_294%20(1).webp?updatedAt=1762421540393';
+const PRELOAD_LIMIT = 9;
+const GLOBAL_AD_REDIRECT = 'https://buffetaccommodating.com/jbc2gkf4?key=05b740b50db4084a0cc0799f93121a1a';
+const AD_CONTAINER_ID = 'container-6b9858a2c40c376a05e4fcc5ee5a70ce';
+const AD_SCRIPT_SRC = '//onlyobsessionfifty.com/6b9858a2c40c376a05e4fcc5ee5a70ce/invoke.js';
+const videoData = [
+  { id: 'video-01', src: 'https://files.catbox.moe/5h62qr.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/5h62qr.mp4' },
+  { id: 'video-02', src: 'https://files.catbox.moe/bvrbgk.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/bvrbgk.mp4' },
+  { id: 'video-03', src: 'https://files.catbox.moe/597ljq.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/597ljq.mp4' },
+  { id: 'video-04', src: 'https://files.catbox.moe/vx2nqz.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/vx2nqz.mp4' },
+  { id: 'video-05', src: 'https://files.catbox.moe/zgeo0w.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/zgeo0w.mp4' },
+  { id: 'video-06', src: 'https://files.catbox.moe/xd7olu.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/xd7olu.mp4' },
+  { id: 'video-07', src: 'https://files.catbox.moe/kvkn12.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/kvkn12.mp4' },
+  { id: 'video-08', src: 'https://files.catbox.moe/o4hu94.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/o4hu94.mp4' },
+  { id: 'video-09', src: 'https://files.catbox.moe/7oe4uq.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/7oe4uq.mp4' },
+  { id: 'video-10', src: 'https://files.catbox.moe/an2k0u.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/an2k0u.mp4' },
+  { id: 'video-11', src: 'https://files.catbox.moe/du1x2h.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/du1x2h.mp4' },
+  { id: 'video-12', src: 'https://files.catbox.moe/fu2004.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 696969, bookmarkUrl: 'https://files.catbox.moe/fu2004.mp4' },
+
+  { id: 'video-13', src: 'https://files.catbox.moe/bc5oat.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/bc5oat.mp4' },
+  { id: 'video-14', src: 'https://files.catbox.moe/u5wult.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/u5wult.mp4' },
+  { id: 'video-15', src: 'https://files.catbox.moe/qvjzlq.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/qvjzlq.mp4' },
+  { id: 'video-16', src: 'https://files.catbox.moe/77rvac.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/77rvac.mp4' },
+  { id: 'video-17', src: 'https://files.catbox.moe/ly4rlz.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/ly4rlz.mp4' },
+  { id: 'video-18', src: 'https://files.catbox.moe/p0kss7.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/p0kss7.mp4' },
+  { id: 'video-19', src: 'https://files.catbox.moe/xfs7qv.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/xfs7qv.mp4' },
+  { id: 'video-20', src: 'https://files.catbox.moe/zttzts.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/zttzts.mp4' },
+  { id: 'video-21', src: 'https://files.catbox.moe/dt27d1.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/dt27d1.mp4' },
+  { id: 'video-22', src: 'https://files.catbox.moe/0gcnj5.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/0gcnj5.mp4' },
+  { id: 'video-23', src: 'https://files.catbox.moe/15n0i9.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/15n0i9.mp4' },
+  { id: 'video-24', src: 'https://files.catbox.moe/slqyzu.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/slqyzu.mp4' },
+  { id: 'video-25', src: 'https://files.catbox.moe/xijnai.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/xijnai.mp4' },
+  { id: 'video-26', src: 'https://files.catbox.moe/neq2k6.mov', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/neq2k6.mov' },
+  { id: 'video-27', src: 'https://files.catbox.moe/orhxpu.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/orhxpu.mp4' },
+  { id: 'video-28', src: 'https://files.catbox.moe/txpprx.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/txpprx.mp4' },
+  { id: 'video-29', src: 'https://files.catbox.moe/34od52.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/34od52.mp4' },
+  { id: 'video-30', src: 'https://files.catbox.moe/g06g5i.mov', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/g06g5i.mov' },
+  { id: 'video-31', src: 'https://files.catbox.moe/zgeo0w.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Babyflo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/zgeo0w.mp4' },
+  { id: 'video-32', src: 'https://files.catbox.moe/wt0cas.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/wt0cas.mp4' },
+  { id: 'video-33', src: 'https://files.catbox.moe/xj6ckt.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/xj6ckt.mp4' },
+  { id: 'video-34', src: 'https://files.catbox.moe/vww2vh.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/vww2vh.mp4' },
+  { id: 'video-35', src: 'https://files.catbox.moe/kscw1l.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/kscw1l.mp4' },
+  { id: 'video-36', src: 'https://files.catbox.moe/vx2nqz.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/vx2nqz.mp4' },
+  { id: 'video-37', src: 'https://files.catbox.moe/w7hpkv.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/w7hpkv.mp4' },
+  { id: 'video-38', src: 'https://files.catbox.moe/jde8ep.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/jde8ep.mp4' },
+   { id: 'video-39', src: 'https://files.catbox.moe/nf0sbu.mp4', posterLow: poster, author: 'ZonaAsupan69', handle: '@ZonaAsupan69', caption: 'Asupan Ketua 🤤 #Asupan69 #Movie69 #BabyFlo69', likes: 69693, bookmarkUrl: 'https://files.catbox.moe/nf0sbu.mp4' }
+];
+
+
+
+/* ensure unique ids */
+(function normalizeIds(){
+  const seen = new Map();
+  for(let i=0;i<videoData.length;i++){
+    const it = videoData[i];
+    let base = it.id || 'video';
+    let id = base;
+    if(seen.has(base)) {
+      id = base + '-' + (seen.get(base) + 1);
+      seen.set(base, seen.get(base)+1);
+    } else {
+      seen.set(base, 1);
+    }
+    it.id = id;
+  }
+}());
+
+/* State */
+const reelsWrapEl = document.getElementById('reelsWrap');
+let audioEnabled = true;
+let currentPlayingVideo = null;
+let preloadSet = new Set();
+let preloadQueue = [];
+let preloadMap = new Map();
+let cycleIndex = 0;
+let batchSize = 2;
+let initialRender = Math.min((videoData && videoData.length) ? videoData.length : 0, 3);
+let MAX_POOL = 8;
+let OFFSCREEN_REMOVE_THRESHOLD = 2.0;
+let isAutoScrolling = false;
+let _isMutating = false;
+let _userScrolling = false;
+let _userScrollT = null;
+let supportsAnimate = (typeof Element !== 'undefined' && Element.prototype && typeof Element.prototype.animate === 'function');
+let idleCallbackId = null;
+let globalObserver = null;
+function runIdle(cb){ return (typeof requestIdleCallback === 'function') ? requestIdleCallback(cb) : setTimeout(cb, 200); }
+function cancelIdle(id){ if(typeof cancelIdleCallback === 'function') cancelIdleCallback(id); else clearTimeout(id); }
+
+/* compute random likes safely */
+try {
+  if (Array.isArray(videoData)) {
+    for (let i = 0; i < videoData.length; i++) {
+      try {
+        const v = videoData[i] || {};
+        const base = Math.max(0, Math.floor(v.likes || 0));
+        if (base === 0) { v._randLikes = 0; continue; }
+        if (typeof computeRandomLikes === 'function' && typeof seededInRange === 'function') {
+          const r = computeRandomLikes(base);
+          // combine fields into a single seed string to avoid missing operators
+          v._randLikes = seededInRange(`${v.id}|${v.src}|${Math.random()}`, r.min, r.max);
+        } else {
+          v._randLikes = base + Math.floor(Math.random() * Math.max(1, Math.round(base * 0.09)));
+        }
+      } catch (e) {
+        console.warn('compute likes error for item', videoData[i], e);
+        try { videoData[i]._randLikes = videoData[i].likes || 0; } catch (ee) {}
+      }
+    }
+  }
+} catch (e) { console.warn('compute random likes failed', e); }
+
+/* video map */
+let videoMap = {};
+function buildVideoMap(){
+  videoMap = {};
+  if (!Array.isArray(videoData)) return;
+  for(let i=0;i<videoData.length;i++){
+    try{ const item = videoData[i] || {}; if (item.id) videoMap[item.id] = item; }catch(e){}
+  }
+}
+
+/* share helper */
+function buildShareUrl(platform, url, text){
+  if(!url) return '#';
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(text || '');
+  switch(platform){
+    case 'whatsapp': { const payload = (text ? text + ' ' : '') + url; return `https://api.whatsapp.com/send?text=${encodeURIComponent(payload)}`; }
+    case 'telegram': return `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+    case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    default: return url;
+  }
+}
+
+/* share menu with focus + close on outside */
+function showShareMenu(reel, anchorRect, openerBtn){
+  try{
+    if(!reel) return;
+    const existing = reel.querySelector('.vp-share-menu');
+    if(existing){
+      if(existing._onDocClick) document.removeEventListener('click', existing._onDocClick);
+      existing.remove();
+    }
+    const id = reel.dataset.id || '';
+    const baseUrl = (location.href.split('#')[0] || location.href);
+    const shareUrl = baseUrl + '#video=' + encodeURIComponent(id);
+    const item = videoMap[id];
+    const text = item ? `${item.author || ''} — ${item.caption || ''}`.trim() : '';
+
+    const menu = document.createElement('div');
+    menu.className = 'vp-share-menu';
+    menu.setAttribute('role','menu');
+
+    const reelRect = reel.getBoundingClientRect();
+    const left = Math.min(Math.max(8, (anchorRect.left - reelRect.left) - 20), Math.max(8, reelRect.width - 190));
+    let top = (anchorRect.top - reelRect.top) - 8;
+    if(top < 8) top = anchorRect.bottom - reelRect.top + 8;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    const nativeBtn = document.createElement('button');
+    nativeBtn.type = 'button';
+    nativeBtn.textContent = 'Batalkan...';
+    nativeBtn.setAttribute('role','menuitem');
+    nativeBtn.style.cssText = '  background: linear-gradient(180deg, #9069e9, #090909); border:0;padding:8px 10px;border-radius:8px;color:#fff;cursor:pointer;text-align:left';
+    nativeBtn.addEventListener('click', async (ev)=>{
+      ev.stopPropagation();
+      try{
+        if(navigator.share){
+          await navigator.share({ title: item ? item.caption : document.title, text: text, url: shareUrl });
+        } else showToast('Share Di Batalkan');
+      }catch(e){}
+      if(menu._onDocClick) document.removeEventListener('click', menu._onDocClick);
+      menu.remove();
+      if(openerBtn && typeof openerBtn.focus === 'function') openerBtn.focus();
+    });
+    menu.appendChild(nativeBtn);
+
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '6px';
+
+    function mk(platform,label){
+      const a = document.createElement('a');
+      a.href = buildShareUrl(platform, shareUrl, text);
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = label;
+      a.setAttribute('role','menuitem');
+      a.addEventListener('click', (ev)=>{ ev.stopPropagation(); setTimeout(()=> { if(menu._onDocClick) document.removeEventListener('click', menu._onDocClick); menu.remove(); if(openerBtn && typeof openerBtn.focus === 'function') openerBtn.focus(); }, 250); });
+      return a;
+    }
+    row.appendChild(mk('whatsapp','Share ke WhatsApp'));
+    row.appendChild(mk('telegram','Share ke Telegram'));
+    row.appendChild(mk('facebook','Share ke Facebook'));
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.textContent = 'Salin Link';
+    copyBtn.setAttribute('role','menuitem');
+    copyBtn.style.cssText = 'background:transparent;border:0;padding:8px;text-align:left;color:#fff;cursor:pointer;border-radius:8px';
+    copyBtn.addEventListener('click', async (ev)=>{
+      ev.stopPropagation();
+      try{ if(navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(shareUrl); showToast('Link disalin'); } else { showToast('Clipboard API tidak tersedia'); } }catch(e){ showToast('Gagal menyalin'); } finally { if(menu._onDocClick) document.removeEventListener('click', menu._onDocClick); menu.remove(); if(openerBtn && typeof openerBtn.focus === 'function') openerBtn.focus(); }
+    });
+
+    menu.appendChild(row);
+    menu.appendChild(copyBtn);
+    reel.appendChild(menu);
+
+    menu._onDocClick = (e) => { if(!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', menu._onDocClick); if(openerBtn && typeof openerBtn.focus === 'function') openerBtn.focus(); } };
+    setTimeout(()=> document.addEventListener('click', menu._onDocClick), 30);
+    setTimeout(()=> { const first = menu.querySelector('[role="menuitem"]'); if(first && typeof first.focus === 'function') first.focus(); }, 60);
+  }catch(e){ console.warn('showShareMenu error', e); }
+}
+
+/* heart/like helpers */
+function showHeartAt(reel, pos){
+  try{
+    if(!reel) return;
+    const box = reel.getBoundingClientRect();
+    const x = pos ? (pos.x - box.left) : (box.width / 2);
+    const y = pos ? (pos.y - box.top) : (box.height / 2);
+    let heart = reel.querySelector('.heart-anim');
+    if(!heart){
+      heart = document.createElement('div');
+      heart.className = 'heart-anim';
+      heart.innerHTML = '<svg class="heart-svg" viewBox="0 0 24 24" fill="url(#heartGrad)" aria-hidden="true" width="48" height="48"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+      heart.style.position = 'absolute';
+      heart.style.pointerEvents = 'none';
+      heart.style.left = '0px';
+      heart.style.top = '0px';
+      heart.style.transform = 'translate(-50%,-50%)';
+      reel.appendChild(heart);
+    }
+    heart.style.left = x + 'px';
+    heart.style.top = y + 'px';
+    if(heart._t) clearTimeout(heart._t);
+    if(heart._rm) clearTimeout(heart._rm);
+    heart.classList.add('show');
+    heart._t = setTimeout(()=> {
+      try{ heart.classList.remove('show'); }catch(e){}
+      heart._rm = setTimeout(()=> { try{ if(heart.parentNode) heart.parentNode.removeChild(heart); }catch(e){} }, 500);
+    }, 700);
+  }catch(e){ console.warn('showHeartAt error', e); }
+}
+
+function toggleLike(btn, reel){
+  try{
+    const pressed = btn.getAttribute('aria-pressed') === 'true';
+    const countSpan = btn.querySelector('.count');
+    const id = reel && reel.dataset && reel.dataset.id;
+    let base = 0;
+    if(id && videoMap[id]) base = (videoMap[id]._randLikes !== undefined ? videoMap[id]._randLikes : videoMap[id].likes) || 0;
+
+    if(pressed){
+      btn.setAttribute('aria-pressed','false');
+      btn.classList.remove('liked');
+      if(countSpan) countSpan.textContent = fmt(base);
+      if(supportsAnimate){ try{ btn.animate([{transform:'scale(1.06)'},{transform:'scale(.98)'},{transform:'scale(1)'}], { duration: 220 }); }catch(e){} }
+    } else {
+      btn.setAttribute('aria-pressed','true');
+      btn.classList.add('liked');
+      if(countSpan) countSpan.textContent = fmt(base + 1);
+      if(supportsAnimate){ try{ btn.animate([{transform:'scale(1)'},{transform:'scale(1.18)'},{transform:'scale(1)'}], { duration: 220 }); }catch(e){} }
+    }
+  }catch(e){ console.warn('toggleLike error', e); }
+}
+function triggerLike(reel, pos){
+  try{
+    const likeBtn = reel.querySelector('.like-btn');
+    if(likeBtn){ if(likeBtn.getAttribute('aria-pressed') !== 'true') toggleLike(likeBtn, reel); }
+    showHeartAt(reel, pos);
+  }catch(e){ console.warn('triggerLike error', e); }
+}
+
+/* createReel: render single reel element */
+function createReel(item){
+  const reel = document.createElement('section');
+  reel.className = 'reel';
+  reel.dataset.id = item.id || '';
+  reel.tabIndex = 0;
+  reel.setAttribute('role','group');
+  reel.setAttribute('aria-label', 'Video ' + escapeHtml(item.id||''));
+
+  const card = document.createElement('div'); card.className='card';
+
+  const posterLayer = document.createElement('div'); posterLayer.className='poster-layer';
+  posterLayer.setAttribute('aria-hidden','true');
+  posterLayer.dataset.posterLow = item.posterLow || '';
+  posterLayer.dataset.posterHigh = item.poster || '';
+  if(item.posterLow) posterLayer.style.backgroundImage = 'url(\'' + item.posterLow + '\')';
+
+  const video = document.createElement('video');
+  video.preload = 'none';
+  video.playsInline = true;
+  video.setAttribute('playsinline','');
+  video.muted = true;
+  video.loop = true;
+  video.crossOrigin = 'anonymous';
+  if(item.poster) video.poster = item.poster;
+  video.dataset.src = item.src || '';
+  video.dataset.loaded = 'idle';
+  video.dataset.playAttempt = 'auto';
+  video.tabIndex = -1;
+
+  const source = document.createElement('source');
+  video.appendChild(source);
+
+  const playOverlay = document.createElement('div');
+  playOverlay.className = 'play-overlay';
+
+// play button visual (menggunakan <img> untuk icon eksternal + fallback)
+const playVisual = document.createElement('div');
+playVisual.className = 'play-button-visual';
+
+const playCircle = document.createElement('div');
+playCircle.className = 'play-circle';
+playCircle.setAttribute('aria-hidden', 'true');
+
+// External SVG URL — ganti dengan URL icon yang mau kamu pakai
+const externalIconUrl = 'https://cdn-icons-png.flaticon.com/128/18257/18257135.png';
+
+const iconImg = document.createElement('img');
+iconImg.src = externalIconUrl;
+iconImg.alt = ''; // decorative
+iconImg.loading = 'lazy';
+iconImg.decoding = 'async';
+iconImg.style.width = '69%';
+iconImg.style.height = '69%';
+iconImg.style.display = 'block';
+
+// If external SVG can't load or CORS blocks it, fallback to inline white SVG
+iconImg.addEventListener('error', function onErr() {
+  iconImg.removeEventListener('error', onErr);
+  playCircle.innerHTML = '<svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#ffffff"></path></svg>';
+});
+
+playCircle.appendChild(iconImg);
+playVisual.appendChild(playCircle);
+
+const playLabel = document.createElement('div');
+playLabel.className = 'play-label';
+playLabel.textContent = 'Ketuk atau scroll';
+playVisual.appendChild(playLabel);
+
+playOverlay.appendChild(playVisual);
+
+// play button (unchanged)
+const playBtn = document.createElement('button');
+playBtn.type = 'button';
+playBtn.className = 'play-btn';
+playBtn.setAttribute('aria-label', 'Play video');
+playOverlay.appendChild(playBtn);
+
+// ui column (unchanged)
+const uiColumn = document.createElement('div');
+uiColumn.className = 'ui-column';
+uiColumn.setAttribute('aria-hidden', 'true');
+
+  const profileWrap = document.createElement('div');
+  profileWrap.className = 'ui-btn profile-wrap';
+  profileWrap.title = item.author || '';
+  profileWrap.setAttribute('aria-label', item.author ? ('Profil ' + item.author) : 'Profile');
+  profileWrap.setAttribute('role', 'button');
+  profileWrap.tabIndex = -1;
+  const avatar = document.createElement('div'); avatar.className = 'avatar';
+  const avatarImg = document.createElement('img'); avatarImg.src = (item.avatarUrl && item.avatarUrl.trim()) ? item.avatarUrl : defaultAvatar;
+  avatarImg.loading = 'lazy'; avatarImg.alt = item.author ? ('Foto ' + item.author) : 'Avatar';
+  avatarImg.setAttribute('aria-hidden','true');
+  avatarImg.onerror = function(){ if(this.src && defaultAvatar && this.src !== defaultAvatar) this.src = defaultAvatar; };
+  avatar.appendChild(avatarImg); profileWrap.appendChild(avatar); uiColumn.appendChild(profileWrap);
+
+  const likeBtn = document.createElement('button'); likeBtn.type='button'; likeBtn.className='ui-btn like-btn'; likeBtn.title='Like';
+  likeBtn.setAttribute('aria-label','Like'); likeBtn.setAttribute('role','button'); likeBtn.setAttribute('aria-pressed','false');
+  likeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="url(#heartGrad)" stroke="none" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  const likeCount = document.createElement('span'); likeCount.className='count'; likeCount.setAttribute('aria-hidden','true'); likeCount.textContent = fmt(item._randLikes);
+  likeBtn.appendChild(likeCount); uiColumn.appendChild(likeBtn);
+
+  const commentBtn = document.createElement('button'); commentBtn.type='button'; commentBtn.className='ui-btn comment-btn'; commentBtn.title='Comments'; commentBtn.setAttribute('aria-label','Comments');
+  commentBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  uiColumn.appendChild(commentBtn);
+
+  const shareBtn = document.createElement('button'); shareBtn.type='button'; shareBtn.className='ui-btn share-btn'; shareBtn.title='Share'; shareBtn.setAttribute('aria-label','Share');
+  shareBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>';
+  uiColumn.appendChild(shareBtn);
+
+  const bookmarkIcon = '<svg viewBox="0 0 24 24" width="45" height="45" fill="currentColor" stroke="none" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7z"/><path d="M5 20h14v-2H5v2z"/></svg>';
+
+  let bookmarkEl;
+  if(item.bookmarkUrl){
+    bookmarkEl = document.createElement('button');
+    bookmarkEl.className = 'ui-btn bookmark-btn';
+    bookmarkEl.title = 'Download';
+    bookmarkEl.setAttribute('aria-label','Download');
+    bookmarkEl.innerHTML = bookmarkIcon;
+    bookmarkEl.dataset.href = item.bookmarkUrl;
+    if(item.adUrl) bookmarkEl.dataset.ad = item.adUrl;
+  } else {
+    bookmarkEl = document.createElement('button');
+    bookmarkEl.type = 'button';
+    bookmarkEl.className = 'ui-btn bookmark-btn';
+    bookmarkEl.title = 'Save';
+    bookmarkEl.setAttribute('aria-label','Bookmark');
+    bookmarkEl.innerHTML = bookmarkIcon;
+  }
+  uiColumn.appendChild(bookmarkEl);
+
+  const progressWrap = document.createElement('div'); progressWrap.className='progress-wrap'; progressWrap.setAttribute('aria-hidden','true');
+  const progress = document.createElement('div'); progress.className='progress'; const progressI = document.createElement('i'); progress.appendChild(progressI); progressWrap.appendChild(progress);
+
+  const meta = document.createElement('div'); meta.className='meta'; meta.setAttribute('aria-hidden','true');
+  const author = document.createElement('div'); author.className='author';
+  const name = document.createElement('div'); name.className='name'; name.textContent = item.author || '';
+  const handle = document.createElement('div'); handle.className='handle'; handle.textContent = item.handle || '';
+  author.appendChild(name); author.appendChild(handle);
+  const caption = document.createElement('div'); caption.className='caption'; caption.innerHTML = linkifyText(item.caption || '');
+  const music = document.createElement('div'); music.className='music';
+  music.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="opacity:.85"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"></path></svg><div class="marquee">Original audio — ' + escapeHtml(item.author||'') + '</div>';
+  meta.appendChild(author); meta.appendChild(caption); meta.appendChild(music);
+
+  card.appendChild(posterLayer);
+  card.appendChild(video);
+  card.appendChild(playOverlay);
+  card.appendChild(uiColumn);
+  card.appendChild(progressWrap);
+  card.appendChild(meta);
+  reel.appendChild(card);
+
+  /* interactions & handlers */
+  const onCardClick = function(ev){
+    if(ev.target.closest('.ui-btn, .play-btn')) return;
+    try{
+      if(video){
+        if(video.paused){
+          try{ resumeVideo(video); }catch(e){}
+          currentPlayingVideo = video;
+          const overlay = card.querySelector('.play-overlay');
+          if(overlay) overlay.classList.add('hidden');
+          video.style.opacity = '1';
+        } else {
+          try{ pauseVideo(video, 'user'); }catch(e){}
+        }
+      }
+    }catch(e){}
+    try{ ev.stopPropagation(); }catch(e){}
+  };
+  addListener(card, 'click', onCardClick, false);
+
+  let raf = 0;
+  const onTimeUpdate = function(){
+    if(raf) return;
+    raf = requestAnimationFrame(function(){
+      try{ if(video.duration && !isNaN(video.duration)){ progressI.style.width = ((video.currentTime / video.duration) * 100) + '%'; } }catch(e){}
+      raf = 0;
+    });
+  };
+
+  let posterRemoveTimer = null;
+  function hidePoster(posterLayerLocal, videoEl){
+    try{
+      if(videoEl) videoEl.style.opacity = '1';
+      if(posterLayerLocal && posterLayerLocal.classList && !posterLayerLocal.classList.contains('hidden')){
+        posterLayerLocal.classList.add('hidden');
+        if(posterRemoveTimer) clearTimeout(posterRemoveTimer);
+        posterRemoveTimer = setTimeout(function(){ try{ if(posterLayerLocal.parentNode) posterLayerLocal.parentNode.removeChild(posterLayerLocal); }catch(e){} }, 320);
+        reel._posterRemoveTimer = posterRemoveTimer;
+      }
+      try{ if(playOverlay && playOverlay.classList) playOverlay.classList.add('hidden'); }catch(e){}
+    }catch(e){}
+  }
+
+  const onPlaying = function(){ try{ hidePoster(posterLayer, video); }catch(e){} };
+  const onLoadedData = function(){ try{ if(playOverlay && playOverlay.classList) playOverlay.classList.add('hidden'); }catch(e){} };
+  const onEnded = function(){ try{ scrollToNext(reel); }catch(e){} };
+  const onError = function(ev){ try{ video.dataset.loaded = 'error'; console.warn('video error', ev); showToast('Gagal memuat video'); }catch(e){} };
+
+  addListener(video, 'timeupdate', onTimeUpdate, { passive: true });
+  addListener(video, 'playing', onPlaying, false);
+  addListener(video, 'loadeddata', onLoadedData, false);
+  addListener(video, 'ended', onEnded, false);
+  addListener(video, 'error', onError, false);
+
+  /* touch/double-click like */
+  let lastTap = 0;
+  const onTouchEnd = function(ev){
+    try{
+      const now = Date.now();
+      if(now - lastTap < 300){
+        const touch = ev.changedTouches && ev.changedTouches[0];
+        triggerLike(reel, touch ? {x:touch.clientX, y:touch.clientY} : null);
+      }
+      lastTap = now;
+    }catch(e){}
+  };
+  addListener(reel, 'touchend', onTouchEnd, { passive: true });
+
+  const onDblClick = function(ev){ try{ triggerLike(reel, { x: ev.clientX, y: ev.clientY }); }catch(e){} };
+  addListener(reel, 'dblclick', onDblClick, { passive: true });
+
+  const onPlayArea = function(e){
+    try{
+      if(e && e.stopPropagation) e.stopPropagation();
+      const s = video.querySelector && video.querySelector('source');
+      if(s && !s.src){
+        const src = video.dataset.src;
+        if(src){ s.src = src; s.type = guessMime(src); try{ video.load(); }catch(e){} video.dataset.loaded = 'loading'; }
+      }
+      try{ resumeVideo(video); }catch(err){
+        try{ video.play().then(function(){ currentPlayingVideo = video; }).catch(()=>{}); }catch(e){}
+      }
+    }catch(err){ console.warn('play area error', err); }
+  };
+  addListener(playBtn, 'click', onPlayArea, false);
+
+  const onShareClick = function(ev){ try{ if(ev && ev.stopPropagation) ev.stopPropagation(); showShareMenu(reel, ev.currentTarget && ev.currentTarget.getBoundingClientRect && ev.currentTarget.getBoundingClientRect(), ev.currentTarget); }catch(e){} };
+  addListener(shareBtn, 'click', onShareClick, false);
+
+  const onBookmarkClick = function(ev){
+    try{
+      if(ev && ev.stopPropagation) ev.stopPropagation();
+      const href = bookmarkEl.dataset && bookmarkEl.dataset.href;
+      if(href){ openAdModal(href, bookmarkEl); }
+      else {
+        let isSaved = false;
+        try{ isSaved = bookmarkEl.classList.toggle('saved'); }catch(e){ if(bookmarkEl.className.indexOf('saved')===-1) bookmarkEl.className += ' saved'; else bookmarkEl.className = bookmarkEl.className.replace(/\bsaved\b/g,''); isSaved = bookmarkEl.className.indexOf('saved')!==-1; }
+        showToast(isSaved ? 'Tersimpan' : 'Dihapus');
+        try{ if(bookmarkEl && bookmarkEl.animate) bookmarkEl.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:180}); }catch(e){}
+      }
+    }catch(e){}
+  };
+  addListener(bookmarkEl, 'click', onBookmarkClick, false);
+
+  reel._handlers = { onCardClick, onTimeUpdate, onPlaying, onLoadedData, onEnded, onError, onTouchEnd, onDblClick, onPlayArea, onShareClick, onBookmarkClick };
+
+  reel._cleanup = function(){
+    try{ if(globalObserver && typeof globalObserver.unobserve === 'function') globalObserver.unobserve(reel); }catch(e){}
+    try{ if(raf) cancelAnimationFrame(raf); }catch(e){}
+    try{ if(onTimeUpdate) video.removeEventListener('timeupdate', onTimeUpdate); }catch(e){}
+    try{ if(onPlaying) video.removeEventListener('playing', onPlaying); }catch(e){}
+    try{ if(onLoadedData) video.removeEventListener('loadeddata', onLoadedData); }catch(e){}
+    try{ if(onEnded) video.removeEventListener('ended', onEnded); }catch(e){}
+    try{ if(onError) video.removeEventListener('error', onError); }catch(e){}
+    try{ if(onTouchEnd) reel.removeEventListener('touchend', onTouchEnd); }catch(e){}
+    try{ if(onDblClick) reel.removeEventListener('dblclick', onDblClick); }catch(e){}
+    try{ if(onPlayArea) playBtn.removeEventListener('click', onPlayArea); }catch(e){}
+    try{ if(onShareClick && shareBtn) shareBtn.removeEventListener('click', onShareClick); }catch(e){}
+    try{ if(onBookmarkClick && bookmarkEl) bookmarkEl.removeEventListener('click', onBookmarkClick); }catch(e){}
+    try{ if(onCardClick) card.removeEventListener('click', onCardClick); }catch(e){}
+    try{ if(reel._posterRemoveTimer) { clearTimeout(reel._posterRemoveTimer); reel._posterRemoveTimer = null; } }catch(e){}
+    try{
+      if(video){
+        try{ pauseVideo(video, 'system'); }catch(e){}
+        try{
+          const srcEl = video.querySelector && video.querySelector('source');
+          if(srcEl && srcEl.src){ try{ if(srcEl.src.indexOf('blob:') === 0) URL.revokeObjectURL(srcEl.src); }catch(e){} srcEl.src = ''; }
+          if(video.src){ try{ if(video.src.indexOf('blob:') === 0) URL.revokeObjectURL(video.src); }catch(e){} try{ video.removeAttribute('src'); }catch(e){} }
+          try{ video.load(); }catch(e){}
+        }catch(e){}
+        try{ const pl = posterLayer; if(pl){ pl.style.backgroundImage = ''; pl.dataset._loaded = ''; } }catch(e){}
+      }
+    }catch(e){}
+    try{ reel._handlers = null; }catch(e){}
+  };
+
+  return reel;
+}
+
+/* Pause / resume helpers */
+function pauseVideo(v, reason){
+  try{
+    if(!v) return;
+    if(typeof v.pause === 'function' && !v.paused){ try{ v.pause(); }catch(e){ console.warn('pause() failed', e); } }
+    try{ if(v.dataset){ if(reason === 'user') v.dataset.playAttempt = 'user'; else v.dataset.playAttempt = 'blocked'; } }catch(e){}
+  }catch(e){ console.warn('pauseVideo helper error', e); }
+  try{ if(typeof currentPlayingVideo !== 'undefined' && currentPlayingVideo === v) currentPlayingVideo = null; }catch(e){}
+}
+function resumeVideo(v){
+  try{
+    if(!v) return;
+    try{ if(v.dataset) v.dataset.playAttempt = 'auto'; }catch(e){}
+    try{ v.muted = !audioEnabled; }catch(e){}
+    try{ const p = v.play && v.play(); if(p && typeof p.catch === 'function') p.catch(()=>{}); }catch(e){}
+    try{ currentPlayingVideo = v; }catch(e){}
+  }catch(e){ console.warn('resumeVideo helper error', e); }
+}
+function pauseAll(){
+  try{
+    const vids = document.querySelectorAll('video');
+    for(let i=0;i<vids.length;i++){ try{ pauseVideo(vids[i], 'system'); }catch(e){ console.warn('pauseAll inner error', e); } }
+  }catch(e){ console.warn('pauseAll error', e); }
+}
+
+/* delegated UI */
+function setupDelegatedUI(){
+  if(!reelsWrapEl) return;
+  reelsWrapEl._handlers = reelsWrapEl._handlers || {};
+  const delegatedClick = async (ev) => {
+    if(ev.target.closest('.reel') && !ev.target.closest('.ui-btn, .play-btn, .profile-wrap')) return;
+
+    const btn = ev.target.closest('.ui-btn, .play-btn, .profile-wrap');
+    const reel = ev.target.closest('.reel');
+    if(btn && reel){
+      if(btn.classList.contains('like-btn')){ toggleLike(btn, reel); return; }
+      if(btn.classList.contains('comment-btn')){ showToast('COMING SOON'); if(supportsAnimate){ try{ btn.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:260}); }catch(e){} } return; }
+      if(btn.classList.contains('share-btn')){
+        const itemId = reel.dataset.id;
+        const base = location.href.split('#')[0] || location.href;
+        const shareUrl = base + '#video=' + encodeURIComponent(itemId);
+        const item = videoMap[itemId] || null;
+        const text = item ? ((item.author || '') + ' — ' + (item.caption || '')).trim() : '';
+        if(navigator.share){
+          try{ navigator.share({ title: item ? item.caption : document.title, text: text, url: shareUrl }); }catch(e){ showShareMenu(reel, btn.getBoundingClientRect(), btn); }
+        } else { showShareMenu(reel, btn.getBoundingClientRect(), btn); }
+        return;
+      }
+      if(btn.classList.contains('bookmark-btn')){
+        const href = btn.dataset.href;
+        if(href){ openAdModal(href, btn); return; }
+        let isSaved = false;
+        try{ isSaved = btn.classList.toggle('saved'); }catch(e){ if(btn.className.indexOf('saved')===-1) btn.className += ' saved'; else btn.className = btn.className.replace(/\bsaved\b/g,''); isSaved = btn.className.indexOf('saved')!==-1; }
+        showToast(isSaved ? 'Tersimpan' : 'Dihapus');
+        if(supportsAnimate){ try{ btn.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:180}); }catch(e){} }
+        return;
+      }
+      if(btn.classList.contains('profile-wrap')){ showToast('COMING SOON'); return; }
+    }
+  };
+  reelsWrapEl.addEventListener('click', delegatedClick, {passive:false});
+  reelsWrapEl._handlers.onDelegatedClick = delegatedClick;
+}
+
+/* modal implementation - inject iframe into modalAdSlot (no sandbox) */
+const adModalEl = document.getElementById('adModal');
+const modalCloseBtn = document.getElementById('modalClose');
+const modalProceedBtn = document.getElementById('modalProceed');
+const modalCancelBtn = document.getElementById('modalCancel');
+const modalMessage = document.getElementById('modalMessage');
+const modalCountdownEl = document.getElementById('modalCountdown');
+
+let modalState = {
+  open: false,
+  target: null,
+  opener: null,
+  countdownId: null,
+  startTime: 0,
+  countdownDone: false,
+  adOpened: false,
+  adUrl: null,
+  cleanup: null // function to cleanup injected iframe
+};
+
+/* helper: inject iframe into modalAdSlot and provide cleanup */
+function injectAdIframeIntoSlot(adUrl, timeoutMs = 3000) {
+  try {
+    const adSlot = document.getElementById('modalAdSlot');
+    if (!adSlot) return null;
+
+    // clear previous
+    while (adSlot.firstChild) adSlot.removeChild(adSlot.firstChild);
+
+    // wrapper (use AD_CONTAINER_ID if you want consistent id)
+    const wrap = document.createElement('div');
+    if (typeof AD_CONTAINER_ID !== 'undefined') wrap.id = AD_CONTAINER_ID;
+    wrap.className = 'adframe-wrap';
+
+    // loading placeholder
+    const loading = document.createElement('div');
+    loading.className = 'ad-loading';
+    loading.textContent = 'Memuat iklan…';
+    wrap.appendChild(loading);
+
+    // create iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = 'modalAdFrame';
+    iframe.className = 'ad-frame';
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'autoplay; fullscreen');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.loading = 'lazy';
+
+    // track loaded state
+    let loaded = false;
+    function onLoad() {
+      loaded = true;
+      try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch (e) {}
+    }
+    function onError() {
+      loaded = false;
+      try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch (e) {}
+    }
+    iframe.addEventListener('load', onLoad);
+    iframe.addEventListener('error', onError);
+
+    // append iframe after handlers attached
+    wrap.appendChild(iframe);
+    adSlot.appendChild(wrap);
+    adSlot.removeAttribute('aria-hidden');
+
+    // set src last to start loading
+    iframe.src = String(adUrl || '');
+
+    // fallback: if not loaded within timeout -> show button to open in new tab
+    const t = setTimeout(() => {
+      if (loaded) return;
+      try {
+        // stop iframe
+        iframe.src = 'about:blank';
+      } catch (e) {}
+      try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch (e) {}
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-ghost';
+      btn.textContent = 'Buka iklan di tab baru';
+      btn.addEventListener('click', () => {
+        try { window.open(adUrl, '_blank', 'noopener'); } catch (e) { window.location.href = adUrl; }
+      });
+      wrap.appendChild(btn);
+
+      // optionally enable proceed button so user can continue
+      try {
+        if (modalProceedBtn) {
+          modalProceedBtn.disabled = false;
+          modalProceedBtn.removeAttribute('aria-disabled');
+          modalProceedBtn.className = 'btn btn-success';
+          modalProceedBtn.textContent = 'Lihat & Download';
+        }
+      } catch (e) {}
+    }, timeoutMs);
+
+    // return cleanup function
+    return function cleanup() {
+      clearTimeout(t);
+      try {
+        iframe.removeEventListener('load', onLoad);
+        iframe.removeEventListener('error', onError);
+      } catch (e) {}
+      try { iframe.src = 'about:blank'; } catch (e) {}
+      try {
+        if (adSlot) {
+          while (adSlot.firstChild) adSlot.removeChild(adSlot.firstChild);
+          adSlot.setAttribute('aria-hidden', 'true');
+        }
+      } catch (e) {}
+    };
+  } catch (e) {
+    console.warn('injectAdIframeIntoSlot failed', e);
+    return null;
+  }
+}
+
+/* helper: cleanup ad slot if needed */
+function cleanupAdSlotSafe() {
+  try {
+    if (modalState && typeof modalState.cleanup === 'function') {
+      try { modalState.cleanup(); } catch (e) {}
+      modalState.cleanup = null;
+    } else {
+      const adSlot = document.getElementById('modalAdSlot');
+      if (adSlot) {
+        const iframe = adSlot.querySelector('iframe');
+        if (iframe) try { iframe.src = 'about:blank'; } catch (e) {}
+        while (adSlot.firstChild) adSlot.removeChild(adSlot.firstChild);
+        adSlot.setAttribute('aria-hidden', 'true');
+      }
+    }
+  } catch (e) { console.warn('cleanupAdSlotSafe failed', e); }
+}
+
+/* replace script injection with iframe injection */
+function openAdModal(targetUrl, openerElem) {
+  if (!adModalEl) return;
+  try { const adSlot = document.getElementById('modalAdSlot'); if (adSlot) adSlot.innerHTML = ''; } catch (e) {}
+
+  modalState.target = targetUrl;
+  modalState.opener = openerElem || null;
+
+  // prefer opener.dataset.ad if present, else use global redirect
+  let adUrl = '';
+  try { if (openerElem && openerElem.dataset && openerElem.dataset.ad) adUrl = openerElem.dataset.ad; } catch (e) {}
+  modalState.adUrl = adUrl || (typeof GLOBAL_AD_REDIRECT !== 'undefined' ? GLOBAL_AD_REDIRECT : null);
+
+  modalState.countdownDone = false;
+  modalState.adOpened = false;
+
+  // UI init
+  const startSeconds = 9;
+  let remaining = startSeconds;
+  if (modalMessage) modalMessage.textContent = 'Menyiapkan files video dalam — ' + remaining + ' Detik';
+  if (modalCountdownEl) modalCountdownEl.textContent = String(remaining);
+  if (modalProceedBtn) {
+    modalProceedBtn.textContent = 'Tunggu...';
+    modalProceedBtn.className = 'btn btn-ghost';
+    try { modalProceedBtn.disabled = true; modalProceedBtn.setAttribute('aria-disabled', 'true'); } catch (e) {}
+  }
+  try { if (modalCancelBtn) modalCancelBtn.disabled = false; } catch (e) {}
+
+  modalState.open = true;
+  adModalEl.classList.add('is-open');
+  adModalEl.setAttribute('aria-hidden', 'false');
+
+  // inject iframe (no sandbox per request). store cleanup handle in modalState.cleanup
+  try {
+    const adUrlToUse = modalState.adUrl || modalState.target || '';
+    if (adUrlToUse) {
+      // cleanup previous if any
+      cleanupAdSlotSafe();
+      modalState.cleanup = injectAdIframeIntoSlot(adUrlToUse, 3000);
+    } else {
+      const adSlot = document.getElementById('modalAdSlot');
+      if (adSlot) adSlot.innerHTML = '<div style="color:#f9f9f9;padding:9px">Tidak ada URL iklan.</div>';
+    }
+  } catch (e) { console.warn('inject ad iframe failed', e); }
+
+  try { modalProceedBtn && modalProceedBtn.focus(); } catch (e) {}
+
+  if (modalState.countdownId) clearInterval(modalState.countdownId);
+  modalState.countdownId = setInterval(() => {
+    try {
+      remaining -= 1;
+      if (modalMessage) modalMessage.textContent = 'Menyiapkan files video dalam — ' + Math.max(0, remaining) + ' Detik';
+      if (modalCountdownEl) modalCountdownEl.textContent = String(Math.max(0, remaining));
+      if (remaining <= 0) {
+        clearInterval(modalState.countdownId);
+        modalState.countdownId = null;
+        modalState.countdownDone = true;
+        try {
+          if (modalProceedBtn) {
+            modalProceedBtn.disabled = false;
+            modalProceedBtn.removeAttribute('aria-disabled');
+            modalProceedBtn.className = 'btn btn-success';
+            modalProceedBtn.textContent = 'Download video sekarang';
+            if (modalMessage) modalMessage.textContent = 'Ready to download';
+          }
+        } catch (e) {}
+      }
+    } catch (e) { console.warn('modal countdown error', e); }
+  }, 1000);
+}
+
+/* ensure cleanup when modal is closed (if you have a closeAdModal elsewhere, call cleanupAdSlotSafe there) */
+if (modalCloseBtn) {
+  modalCloseBtn.addEventListener('click', function () {
+    cleanupAdSlotSafe();
+  }, false);
+}
+if (modalCancelBtn) {
+  modalCancelBtn.addEventListener('click', function () {
+    cleanupAdSlotSafe();
+  }, false);
+}
+if (window && typeof window.closeAdModal === 'function') {
+  // if closeAdModal exists elsewhere, wrap it to ensure cleanup runs
+  const _oldClose = window.closeAdModal;
+  window.closeAdModal = function () {
+    try { cleanupAdSlotSafe(); } catch (e) {}
+    return _oldClose.apply(this, arguments);
+  };
+}
+
+function closeAdModal(){
+  if(!adModalEl) return;
+  try{ if(modalState.countdownId) clearInterval(modalState.countdownId); }catch(e){}
+  modalState.countdownId = null;
+  modalState.open = false;
+  modalState.countdownDone = false;
+  modalState.adOpened = false;
+  modalState.adUrl = null;
+  modalState.target = null;
+  modalState.opener = null;
+
+  try{
+    const adSlot = document.getElementById('modalAdSlot');
+    if(adSlot){
+      while(adSlot.firstChild) adSlot.removeChild(adSlot.firstChild);
+    }
+  }catch(e){ console.warn('clear ad slot failed', e); }
+
+  adModalEl.classList.remove('is-open');
+  adModalEl.setAttribute('aria-hidden','true');
+
+  try{
+    if(modalProceedBtn){
+      modalProceedBtn.textContent = 'Tunggu...';
+      modalProceedBtn.className = 'btn btn-ghost';
+      modalProceedBtn.disabled = true;
+      modalProceedBtn.setAttribute('aria-disabled','true');
+    }
+  }catch(e){}
+
+  try{ if(modalState.opener && typeof modalState.opener.focus === 'function') modalState.opener.focus(); }catch(e){}
+}
+
+/* modal buttons handlers (two-step) */
+try{ if(modalProceedBtn && modalProceedBtn.removeEventListener) modalProceedBtn.removeEventListener('click', window.__modalProceedHandler); }catch(e){}
+window.__modalProceedHandler = function(){
+  try{
+    if(!modalState.open) return;
+    if(!modalState.countdownDone) return; // not ready
+    if(!modalState.adOpened){
+      const adTarget = modalState.adUrl || GLOBAL_AD_REDIRECT || modalState.target;
+      try{
+        const w = window.open(adTarget, '_blank');
+        if(!w){
+          window.location.href = adTarget;
+        }
+      }catch(e){
+        try{ window.location.href = adTarget; }catch(err){}
+      }
+      modalState.adOpened = true;
+      try{
+        modalProceedBtn.textContent = 'Return & Download';
+        modalProceedBtn.className = 'btn btn-primary';
+      }catch(e){}
+      return;
+    }
+    if(modalState.adOpened){
+      const target = modalState.target || modalState.adUrl || '';
+      if(!target){ closeAdModal(); return; }
+      try{
+        const w2 = window.open(target, '_blank');
+        if(!w2) window.location.href = target;
+      }catch(e){
+        try{ window.location.href = target; }catch(err){}
+      }
+      closeAdModal();
+    }
+  }catch(e){ console.warn('modal proceed error', e); }
+};
+if(modalProceedBtn) addListener(modalProceedBtn, 'click', window.__modalProceedHandler, false);
+
+try{ if(modalCancelBtn && modalCancelBtn.removeEventListener) modalCancelBtn.removeEventListener('click', window.__modalCancelHandler); }catch(e){}
+window.__modalCancelHandler = function(){ closeAdModal(); };
+if(modalCancelBtn) addListener(modalCancelBtn, 'click', window.__modalCancelHandler, false);
+try{ if(modalCloseBtn && modalCloseBtn.removeEventListener) modalCloseBtn.removeEventListener('click', window.__modalCloseHandler); }catch(e){}
+window.__modalCloseHandler = function(){ closeAdModal(); };
+if(modalCloseBtn) addListener(modalCloseBtn, 'click', window.__modalCloseHandler, false);
+
+/* keyboard support */
+function setupKeyboard(){
+  const handler = function(e){
+    try{
+      const active = document.activeElement;
+      if(active && active !== document.body && typeof reelsWrapEl !== 'undefined' && active !== reelsWrapEl && !reelsWrapEl.contains(active) && !(active.classList && active.classList.contains('reel'))) return;
+
+      if(e.key === 'ArrowDown' || e.key === 'PageDown'){
+        if(e.preventDefault) e.preventDefault();
+        const cur = visibleReel();
+        if(cur) scrollToNext(cur);
+      }
+      else if(e.key === 'ArrowUp' || e.key === 'PageUp'){
+        if(e.preventDefault) e.preventDefault();
+        const cur2 = visibleReel();
+        if(cur2) scrollToPrev(cur2);
+      }
+      else if(e.code === 'Space' || e.key === ' '){
+        const cur3 = visibleReel();
+        if(cur3){
+          const v = cur3.querySelector('video');
+          if(v){
+            if(v.paused){ try{ resumeVideo(v); }catch(e){} } else { try{ pauseVideo(v, 'user'); }catch(e){} }
+          }
+          if(e.preventDefault) e.preventDefault();
+        }
+      }
+      else if(e.key === 'Enter'){
+        const cur4 = visibleReel();
+        if(cur4){
+          const btn = cur4.querySelector('.play-btn');
+          if(btn) btn.click();
+        }
+      } else if(e.key === 'Escape' || e.key === 'Esc'){
+        if(modalState && modalState.open) closeAdModal();
+      }
+    }catch(err){ console.error('keyboard handler error', err); }
+  };
+  addListener(window, 'keydown', handler, false);
+  if(typeof reelsWrapEl !== 'undefined' && reelsWrapEl) addListener(reelsWrapEl, 'click', ()=> { try{ reelsWrapEl.focus(); }catch(e){} }, false);
+  if(typeof reelsWrapEl !== 'undefined' && reelsWrapEl){ reelsWrapEl._handlers = reelsWrapEl._handlers || {}; reelsWrapEl._handlers.onKeyDown = handler; }
+}
+
+/* scroll & infinite */
+function scrollToNext(reel){
+  if(!reel) return;
+  const next = reel.nextElementSibling;
+  if(next){
+    isAutoScrolling = true;
+    try{ next.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){ try{ next.scrollIntoView(true); }catch(ee){} }
+    setTimeout(function(){ isAutoScrolling = false; }, 520);
+  }
+}
+function scrollToPrev(reel){
+  if(!reel) return;
+  const prev = reel.previousElementSibling;
+  if(prev){
+    isAutoScrolling = true;
+    try{ prev.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){ try{ prev.scrollIntoView(true); }catch(ee){} }
+    setTimeout(function(){ isAutoScrolling = false; }, 520);
+  }
+}
+
+/* renderBatch and trimPool */
+function renderBatch(n){
+  if(!n) n = batchSize;
+  if(!n || !reelsWrapEl) return;
+  if(!videoData || !videoData.length) return;
+  _isMutating = true;
+  const frag = document.createDocumentFragment();
+  const toRender = Math.max(0, Math.min(n, videoData.length));
+  for(let i=0;i<toRender;i++){
+    const item = videoData[cycleIndex % videoData.length];
+    const el = createReel(item);
+    frag.appendChild(el);
+    cycleIndex++;
+  }
+  reelsWrapEl.appendChild(frag);
+  idleCallbackId = runIdle(function(){ try{ loadHighResPosters(); observeVideos(); trimPool(); }catch(e){ console.error('post-render tasks failed', e); } });
+  setTimeout(function(){ _isMutating = false; }, 260);
+}
+
+function visibleReel(){
+  if(document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('reel')) return document.activeElement;
+  if(typeof currentPlayingVideo !== 'undefined' && currentPlayingVideo && currentPlayingVideo.closest) return currentPlayingVideo.closest('.reel');
+  if(!reelsWrapEl) return null;
+  const reels = reelsWrapEl.querySelectorAll('.reel');
+  const wrapRect = reelsWrapEl.getBoundingClientRect();
+  const centerY = wrapRect.top + wrapRect.height/2;
+  for(let i=0;i<reels.length;i++){
+    const r = reels[i];
+    const rect = r.getBoundingClientRect();
+    if(rect.top <= centerY && rect.bottom >= centerY) return r;
+  }
+  return reels[0] || null;
+}
+
+function trimPool(){
+  if(!reelsWrapEl) return;
+  if(isAutoScrolling || _isMutating) return;
+  const nodes = reelsWrapEl.querySelectorAll('.reel');
+  if(!nodes || nodes.length <= MAX_POOL) return;
+  const viewportH = reelsWrapEl.clientHeight || window.innerHeight;
+  const center = visibleReel();
+  let prevScroll = reelsWrapEl.scrollTop;
+  let remaining = nodes.length;
+  for(let i=0;i<nodes.length;i++){
+    if(remaining <= MAX_POOL) break;
+    const n = nodes[i];
+    if(center && (n === center || n === center.previousElementSibling || n === center.nextElementSibling)) continue;
+    const rect = n.getBoundingClientRect();
+    if(rect.bottom < -OFFSCREEN_REMOVE_THRESHOLD * viewportH || rect.top > (1 + OFFSCREEN_REMOVE_THRESHOLD) * viewportH){
+      try{ if(globalObserver && typeof globalObserver.unobserve === 'function') globalObserver.unobserve(n); }catch(e){}
+      try{ if(n._cleanup) n._cleanup(); }catch(e){}
+      try{ if(n.parentNode) n.parentNode.removeChild(n); remaining--; }catch(e){}
+    }
+  }
+  try{ reelsWrapEl.scrollTop = prevScroll; }catch(e){}
+}
+
+/* wheel handling */
+let wheelLock = false;
+function onWheel(e){
+  if(Math.abs(e.deltaY) < 8) return;
+  if(wheelLock){ if(e && e.preventDefault) e.preventDefault(); return; }
+  wheelLock = true;
+  const cur = visibleReel();
+  if(e.deltaY > 0) scrollToNext(cur); else scrollToPrev(cur);
+  if(e && e.preventDefault) e.preventDefault();
+  setTimeout(function(){ wheelLock = false; }, 420);
+}
+
+/* scroll end snap */
+let scrollEndTimer = 0;
+function onScrollEndSnap(){
+  if(_isMutating || _userScrolling || isAutoScrolling) return;
+  clearTimeout(scrollEndTimer);
+  scrollEndTimer = setTimeout(function(){
+    const reels = reelsWrapEl.querySelectorAll('.reel');
+    if(!reels || reels.length === 0) return;
+    const wrapRect = reelsWrapEl.getBoundingClientRect();
+    const centerY = wrapRect.top + wrapRect.height/2;
+    let nearest = null;
+    let minDist = Infinity;
+    for(let i=0;i<reels.length;i++){
+      const r = reels[i];
+      const rect = r.getBoundingClientRect();
+      const dist = Math.abs((rect.top + rect.bottom)/2 - centerY);
+      if(dist < minDist){ minDist = dist; nearest = r; }
+    }
+    if(nearest){
+      isAutoScrolling = true;
+      try{ nearest.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){ try{ nearest.scrollIntoView(true); }catch(ee){} }
+      setTimeout(function(){ isAutoScrolling = false; }, 520);
+    }
+  }, 160);
+}
+
+/* infinite scroll listener */
+function setupInfinite(){
+  if(!reelsWrapEl) return;
+  reelsWrapEl._handlers = reelsWrapEl._handlers || {};
+
+  const onReelsScroll = function(){
+    _userScrolling = true;
+    clearTimeout(_userScrollT);
+    _userScrollT = setTimeout(function(){ _userScrolling = false; onScrollEndSnap(); }, 220);
+    if(reelsWrapEl._handlers._scheduled) return;
+    reelsWrapEl._handlers._scheduled = true;
+    requestAnimationFrame(function(){
+      const nearBottom = reelsWrapEl.scrollTop + reelsWrapEl.clientHeight >= reelsWrapEl.scrollHeight - 420;
+      if(nearBottom) renderBatch(batchSize);
+      reelsWrapEl._handlers._scheduled = false;
+    });
+  };
+  addListener(reelsWrapEl, 'scroll', onReelsScroll, { passive: true });
+  reelsWrapEl._handlers.onReelsScroll = onReelsScroll;
+}
+
+/* observeVideos (IntersectionObserver) */
+function observeVideos(){
+  if(!reelsWrapEl) return;
+  const opts = { root: reelsWrapEl, threshold: [0.15, 0.5], rootMargin: '0px 0px 300px 0px' };
+  if(globalObserver) try{ globalObserver.disconnect(); }catch(e){}
+  let rafScheduled = false;
+  globalObserver = new IntersectionObserver(function(entries){
+    if(rafScheduled) return;
+    rafScheduled = true;
+    requestAnimationFrame(function(){
+      for(let ei=0; ei<entries.length; ei++){
+        const entry = entries[ei];
+        const reel = entry.target;
+        const video = reel && reel.querySelector && reel.querySelector('video');
+        const posterLayer = reel && reel.querySelector && reel.querySelector('.poster-layer');
+        if(!video) continue;
+
+        if((entry.isIntersecting || entry.intersectionRatio > 0) && posterLayer && posterLayer.dataset && posterLayer.dataset.posterLoaded !== 'true'){
+          const high = posterLayer.dataset.posterHigh;
+          if(high){
+            const img = new Image(); img.src = high;
+            img.onload = (function(p, h){ return function(){ try{ p.style.backgroundImage = 'url(\"' + h + '\")'; }catch(e){} p.dataset.posterLoaded = 'true'; }; }(posterLayer, high));
+            img.onerror = (function(p){ return function(){ p.dataset.posterLoaded = 'error'; }; }(posterLayer));
+          } else {
+            posterLayer.dataset.posterLoaded = 'true';
+          }
+        }
+
+        if (entry.intersectionRatio >= 0.15 && video.dataset.loaded === 'idle') {
+          if (!video.dataset.playAttempt) video.dataset.playAttempt = 'auto';
+          const src = video.dataset.src;
+          if (src) {
+            const source = video.querySelector && video.querySelector('source');
+            if (source && !source.src){ source.src = src; source.type = guessMime(src); }
+            try{ video.preload = 'metadata'; video.load(); }catch(e){}
+            video.dataset.loaded = 'loading';
+          }
+        }
+
+        if(entry.intersectionRatio >= 0.5){
+          if (video && video.dataset && (video.dataset.playAttempt === 'user' || video.dataset.playAttempt === 'blocked')) {
+            const overlay = reel.querySelector && reel.querySelector('.play-overlay');
+            if (overlay && overlay.classList) overlay.classList.remove('hidden');
+            continue;
+          }
+
+          const next = reel.nextElementSibling;
+          if(next){
+            const nextVideo = next.querySelector && next.querySelector('video');
+            if(nextVideo){
+              const nextSrc = nextVideo.dataset.src || (nextVideo.querySelector && nextVideo.querySelector('source') && nextVideo.querySelector('source').src);
+              try{
+                if(nextSrc && typeof preloadSet !== 'undefined' && !preloadSet.has(nextSrc)){
+                  const link = document.createElement('link');
+                  link.rel = 'preload'; link.as = 'video'; link.href = nextSrc; link.type = guessMime(nextSrc);
+                  document.head.appendChild(link);
+                  if(typeof preloadSet !== 'undefined') preloadSet.add(nextSrc);
+                  if(typeof preloadMap !== 'undefined' && typeof preloadMap.set === 'function') preloadMap.set(nextSrc, link);
+                  if(typeof preloadQueue !== 'undefined') preloadQueue.push(nextSrc);
+                  if(typeof PRELOAD_LIMIT !== 'undefined' && preloadQueue && preloadQueue.length > PRELOAD_LIMIT){
+                    const remove = preloadQueue.shift();
+                    if(preloadSet && preloadSet.has(remove)) preloadSet.delete(remove);
+                    const remLink = preloadMap && preloadMap.get(remove);
+                    if(remLink){ try{ if(remLink.parentNode) remLink.parentNode.removeChild(remLink); }catch(e){} if(preloadMap && typeof preloadMap.delete === 'function') preloadMap.delete(remove); }
+                  }
+                }
+              }catch(e){}
+            }
+          }
+
+          try{
+            const prev = currentPlayingVideo;
+            if(prev && prev !== video){ try{ pauseVideo(prev, 'system'); }catch(e){} try{ prev.muted = true; }catch(e){} }
+          }catch(e){}
+
+          currentPlayingVideo = video;
+
+          if(video.dataset.loaded === 'idle' || video.dataset.loaded === 'loading'){
+            const s = video.querySelector && video.querySelector('source');
+            if(s && !s.src){
+              const src2 = video.dataset.src;
+              if(src2){ s.src = src2; s.type = guessMime(src2); try{ video.load(); }catch(e){} video.dataset.loaded = 'loading'; }
+            }
+          }
+
+          if(!video.dataset.playAttempt) video.dataset.playAttempt = 'auto';
+          try{ video.muted = (typeof audioEnabled === 'undefined') ? true : !audioEnabled; }catch(e){ video.muted = true; }
+
+          try{
+            const playPromise = video.play();
+            if(playPromise && typeof playPromise.then === 'function'){
+              playPromise.then(()=>{
+                const overlay = reel.querySelector && reel.querySelector('.play-overlay');
+                if(overlay && overlay.classList) overlay.classList.add('hidden');
+                video.dataset.loaded = 'loaded';
+                video.style.opacity = '1';
+              }).catch(()=>{
+                const overlay = reel.querySelector && reel.querySelector('.play-overlay');
+                if(overlay && overlay.classList) overlay.classList.remove('hidden');
+              });
+            }
+          }catch(e){
+            const overlay2 = reel.querySelector && reel.querySelector('.play-overlay');
+            if(overlay2 && overlay2.classList) overlay2.classList.remove('hidden');
+          }
+
+        } else {
+          try{ pauseVideo(video, 'system'); }catch(e){}
+        }
+      }
+      rafScheduled = false;
+    }, 0);
+  }, opts);
+
+  const reels = reelsWrapEl.querySelectorAll('.reel');
+  for(let ri=0; ri<reels.length; ri++){ try{ globalObserver.observe(reels[ri]); }catch(e){} }
+}
+
+/* compute and load high res posters */
+function loadHighResPosters(){
+  const all = reelsWrapEl ? reelsWrapEl.querySelectorAll('.poster-layer') : document.querySelectorAll('.poster-layer');
+  const posters = [];
+  for(let i=0;i<all.length;i++){
+    if(all[i] && all[i].dataset && all[i].dataset.posterLoaded !== 'true' && all[i].dataset.posterHigh) posters.push(all[i]);
+  }
+  for(let j=0;j<Math.min(posters.length,6); j++){
+    (function(pl){
+      const high = pl.dataset.posterHigh;
+      const img = new Image();
+      img.onload = function(){ try{ pl.style.backgroundImage = 'url(\"' + high + '\")'; }catch(e){} pl.dataset.posterLoaded = 'true'; };
+      img.onerror = function(){ pl.dataset.posterLoaded = 'error'; };
+      img.src = high;
+    }(posters[j]));
+  }
+}
+
+/* init & bootstrap */
+function init(){
+  try{
+    if(!reelsWrapEl){ console.error('reelsWrap element not found'); return; }
+    buildVideoMap();
+    renderBatch(initialRender || batchSize);
+    const loadingEl = document.getElementById('loading');
+    if(loadingEl) loadingEl.style.display = 'none';
+    setupInfinite();
+    setupDelegatedUI();
+    setupKeyboard();
+    addListener(reelsWrapEl, 'wheel', onWheel, { passive: false });
+    try{ reelsWrapEl.focus(); }catch(e){}
+    idleCallbackId = runIdle(function(){ try{ loadHighResPosters(); observeVideos(); trimPool(); }catch(e){ console.error('post-render tasks failed', e); } });
+    observeVideos();
+
+    // deep-link handling
+    if(location.hash && location.hash.indexOf('#video=') === 0){
+      const id = decodeURIComponent(location.hash.split('=')[1] || '');
+      const reels = reelsWrapEl.querySelectorAll('.reel');
+      let target = null;
+      for(let i=0;i<reels.length;i++){ if(reels[i].getAttribute('data-video-id') === id){ target = reels[i]; break; } }
+      if(target) setTimeout(function(){ isAutoScrolling = true; try{ target.scrollIntoView({behavior:'auto',block:'center'}); }catch(e){ try{ target.scrollIntoView(true); }catch(ee){} } setTimeout(function(){ isAutoScrolling = false; }, 520); }, 350);
+    }
+
+    addListener(document, 'visibilitychange', function(){ if (document.hidden) pauseAll(); }, { passive: true });
+    addListener(window, 'resize', debounce(function(){ try{ observeVideos(); }catch(e){} }, 220), { passive: true });
+    window.__reels = { videoData: videoData, renderBatch: renderBatch, scrollToNext: scrollToNext, scrollToPrev: scrollToPrev };
+    addListener(window, 'beforeunload', cleanupAll, false);
+    addListener(window, 'pagehide', cleanupAll, { passive: true });
+  }catch(e){
+    console.error('init error', e);
+    showToast('Error inisialisasi');
+  }
+}
+
+/* cleanup */
+function cleanupAll(){
+  try{ if(globalObserver && typeof globalObserver.disconnect === 'function'){ try{ globalObserver.disconnect(); }catch(e){} globalObserver = null; } }catch(e){}
+  try{ if(reelsWrapEl && reelsWrapEl._handlers && reelsWrapEl._handlers.onReelsScroll) reelsWrapEl.removeEventListener('scroll', reelsWrapEl._handlers.onReelsScroll); }catch(e){}
+  try{ if(reelsWrapEl && reelsWrapEl._handlers && reelsWrapEl._handlers.onDelegatedClick) reelsWrapEl.removeEventListener('click', reelsWrapEl._handlers.onDelegatedClick); }catch(e){}
+  try{ if(reelsWrapEl && reelsWrapEl._handlers && reelsWrapEl._handlers.onKeyDown) window.removeEventListener('keydown', reelsWrapEl._handlers.onKeyDown); }catch(e){}
+  try{ if(reelsWrapEl){ const reels = reelsWrapEl.querySelectorAll('.reel'); for(let i=0;i<reels.length;i++){ const r = reels[i]; try{ if(r._cleanup) r._cleanup(); }catch(e){} } } }catch(e){}
+  try{ for(const href of preloadMap.keys()){ try{ const linkEl = preloadMap.get(href); if(linkEl && linkEl.parentNode) linkEl.parentNode.removeChild(linkEl); }catch(e){} } preloadMap = new Map(); preloadSet = new Set(); preloadQueue = []; }catch(e){}
+  try{ if(idleCallbackId) cancelIdle(idleCallbackId); }catch(e){}
+  try{ window.removeEventListener('beforeunload', cleanupAll); }catch(e){} try{ window.removeEventListener('pagehide', cleanupAll); }catch(e){}
+}
+
+/* bootstrap */
+if(document.readyState === 'complete' || document.readyState === 'interactive'){ init(); } else { addListener(document, 'DOMContentLoaded', init, false); }
+</script>
+</body>
+</html>
